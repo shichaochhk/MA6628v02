@@ -9,4 +9,4 @@ Notes are given below:
 
 Assignments are given below:
 
--[Assignments](Assignments.ipynb)
+- [Assignments](Assignments.ipynb)
