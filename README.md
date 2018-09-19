@@ -2,7 +2,7 @@
 
 Notes are given below:
 
-- [Note 01](L01s01.ipynb)
+- [Note 01](L01s01.ipynb) Python fundamentals
 - [Note 02](L02s01.ipynb)
 - [Note 03-01](L03s01.ipynb)
 - [Note 03-02](L03s02.ipynb)
