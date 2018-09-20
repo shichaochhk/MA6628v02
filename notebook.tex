@@ -141,7 +141,7 @@
     \def\gt{>}
     \def\lt{<}
     % Document parameters
-    \title{L03s01}
+    \title{L04s02}
     
     
     
@@ -280,258 +280,208 @@
     
 
     
-    \section{Basic Monte Carlo}\label{basic-monte-carlo}
+    \section{Calibration of BSM
+Volatility}\label{calibration-of-bsm-volatility}
+
+    {[}Ref{]} Chap 8 of {[}Hil15{]}
+
+In simple terms, problem of calibration is to find parameters for the
+proposed model such that observed market quotes of liquidly traded plain
+vanilla options are replicated as closely as possible. The general
+approach is that, one defines an error function that is to be minimized.
+
+    In this below, we will use - Sep-30-2014 Market quote on call options
+underlying Euro Stoxx 50 - BSM model - RMSE as an error function
+
+to illustrate the calibration of volatility.
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}1}]:} \PY{o}{\PYZpc{}}\PY{k}{matplotlib} inline
-        \PY{k+kn}{import} \PY{n+nn}{numpy} \PY{k}{as} \PY{n+nn}{np}
-        \PY{k+kn}{from} \PY{n+nn}{scipy} \PY{k}{import} \PY{n}{stats}
-        \PY{k+kn}{from} \PY{n+nn}{scipy}\PY{n+nn}{.}\PY{n+nn}{stats} \PY{k}{import} \PY{n}{norm}
-        \PY{k+kn}{import} \PY{n+nn}{matplotlib}\PY{n+nn}{.}\PY{n+nn}{pyplot} \PY{k}{as} \PY{n+nn}{plt}
-        \PY{k+kn}{import} \PY{n+nn}{seaborn} \PY{k}{as} \PY{n+nn}{sns}
-        \PY{n}{sns}\PY{o}{.}\PY{n}{set\PYZus{}style}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{white}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-        \PY{n}{sns}\PY{o}{.}\PY{n}{set\PYZus{}context}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{talk}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-\end{Verbatim}
-
-
-    \subsection{Estimate the area of a unit
-circle}\label{estimate-the-area-of-a-unit-circle}
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}2}]:} \PY{c+c1}{\PYZsh{}area of the bounding box}
-        \PY{n}{box\PYZus{}area} \PY{o}{=} \PY{l+m+mf}{4.0}    
-        
-        \PY{c+c1}{\PYZsh{}number of samples}
-        \PY{n}{N\PYZus{}total} \PY{o}{=} \PY{l+m+mi}{10000}
-        
-        \PY{c+c1}{\PYZsh{}drawing random points uniform between \PYZhy{}1 and 1}
-        \PY{n}{X} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{random}\PY{o}{.}\PY{n}{uniform}\PY{p}{(}\PY{n}{low}\PY{o}{=}\PY{o}{\PYZhy{}}\PY{l+m+mi}{1}\PY{p}{,} \PY{n}{high}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{,} \PY{n}{size}\PY{o}{=}\PY{n}{N\PYZus{}total}\PY{p}{)}  
-        \PY{n}{Y} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{random}\PY{o}{.}\PY{n}{uniform}\PY{p}{(}\PY{n}{low}\PY{o}{=}\PY{o}{\PYZhy{}}\PY{l+m+mi}{1}\PY{p}{,} \PY{n}{high}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{,} \PY{n}{size}\PY{o}{=}\PY{n}{N\PYZus{}total}\PY{p}{)}   
-        
-        \PY{c+c1}{\PYZsh{} calculate the distance of the point from the center }
-        \PY{n}{distance} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{sqrt}\PY{p}{(}\PY{n}{X}\PY{o}{*}\PY{o}{*}\PY{l+m+mi}{2}\PY{o}{+}\PY{n}{Y}\PY{o}{*}\PY{o}{*}\PY{l+m+mi}{2}\PY{p}{)}\PY{p}{;}  
-         
-        \PY{c+c1}{\PYZsh{} check if point is inside the circle    }
-        \PY{n}{is\PYZus{}point\PYZus{}inside} \PY{o}{=} \PY{n}{distance}\PY{o}{\PYZlt{}}\PY{l+m+mf}{1.0}
-        
-        \PY{c+c1}{\PYZsh{} sum up the hits inside the circle}
-        \PY{n}{N\PYZus{}inside}\PY{o}{=}\PY{n}{np}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{is\PYZus{}point\PYZus{}inside}\PY{p}{)}
-        
-        \PY{c+c1}{\PYZsh{} estimate the circle area}
-        \PY{n}{circle\PYZus{}area} \PY{o}{=} \PY{n}{box\PYZus{}area} \PY{o}{*} \PY{n}{N\PYZus{}inside}\PY{o}{/}\PY{n}{N\PYZus{}total}
-        
-        \PY{c+c1}{\PYZsh{} some nice visualization}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{scatter}\PY{p}{(}\PY{n}{X}\PY{p}{,}\PY{n}{Y}\PY{p}{,} \PY{n}{c}\PY{o}{=}\PY{n}{is\PYZus{}point\PYZus{}inside}\PY{p}{,} \PY{n}{s}\PY{o}{=}\PY{l+m+mf}{5.0}\PY{p}{,} \PY{n}{edgecolors}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{none}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{n}{cmap}\PY{o}{=}\PY{n}{plt}\PY{o}{.}\PY{n}{cm}\PY{o}{.}\PY{n}{Paired}\PY{p}{)}  
-        \PY{n}{plt}\PY{o}{.}\PY{n}{axis}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{equal}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{xlabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{x}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{y}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-        
-        \PY{c+c1}{\PYZsh{} text output}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Area of the circle = }\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{circle\PYZus{}area}\PY{p}{)}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{pi = }\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{pi}\PY{p}{)}
+{\color{incolor}In [{\color{incolor}1}]:} \PY{k+kn}{import} \PY{n+nn}{numpy} \PY{k}{as} \PY{n+nn}{np}
+        \PY{k+kn}{import} \PY{n+nn}{pandas} \PY{k}{as} \PY{n+nn}{pd}
+        \PY{k+kn}{import} \PY{n+nn}{scipy}\PY{n+nn}{.}\PY{n+nn}{optimize} \PY{k}{as} \PY{n+nn}{sop}
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-Area of the circle =  3.1448
-pi =  3.141592653589793
+{\color{incolor}In [{\color{incolor}2}]:} \PY{c+c1}{\PYZsh{} Market Data from www.eurexchange.com}
+        \PY{c+c1}{\PYZsh{} as of 30. September 2014}
+        \PY{c+c1}{\PYZsh{} European call \PYZam{} put option data (3 maturities)}
+        
+        \PY{n}{options} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{read\PYZus{}csv}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{SX5E\PYZus{}Options\PYZus{}140930.csv}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+        \PY{n}{S0} \PY{o}{=} \PY{l+m+mf}{3225.93}  \PY{c+c1}{\PYZsh{} EURO STOXX 50 level}
+        \PY{n}{r} \PY{o}{=} \PY{l+m+mf}{0.0005}  \PY{c+c1}{\PYZsh{} ECB base rate}
+        \PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{to\PYZus{}datetime}\PY{p}{(}\PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+        \PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{to\PYZus{}datetime}\PY{p}{(}\PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
+        
+        \PY{n}{options}
+\end{Verbatim}
 
-    \end{Verbatim}
+
+\begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}2}]:}          Date  Strike   Call   Maturity    Put
+        0  2014-09-30  3175.0  126.8 2014-12-19   78.8
+        1  2014-09-30  3200.0  110.9 2014-12-19   87.9
+        2  2014-09-30  3225.0   96.1 2014-12-19   98.1
+        3  2014-09-30  3250.0   82.3 2014-12-19  109.3
+        4  2014-09-30  3275.0   69.6 2014-12-19  121.6
+        5  2014-09-30  3175.0  171.0 2015-03-20  129.2
+        6  2014-09-30  3200.0  156.1 2015-03-20  139.4
+        7  2014-09-30  3225.0  142.0 2015-03-20  150.3
+        8  2014-09-30  3250.0  128.5 2015-03-20  161.8
+        9  2014-09-30  3275.0  115.8 2015-03-20  174.0
+        10 2014-09-30  3175.0   82.3 2014-10-17   24.5
+        11 2014-09-30  3200.0   64.3 2014-10-17   31.5
+        12 2014-09-30  3225.0   48.3 2014-10-17   40.5
+        13 2014-09-30  3250.0   34.6 2014-10-17   51.8
+        14 2014-09-30  3275.0   23.5 2014-10-17   65.8
+\end{Verbatim}
+            
+    The above data is the market quote on Sep-30-2014 on call and put
+options underlying Euro Stoxx 50. The question of the calibration is,
+given that the market follows BSM, what is the volatility \(\sigma\)
+fitting to the above market quote?
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}3}]:} \PY{k+kn}{from} \PY{n+nn}{BSM\PYZus{}option\PYZus{}valuation} \PY{k}{import} \PY{o}{*}
+\end{Verbatim}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}4}]:} \PY{k}{def} \PY{n+nf}{generate\PYZus{}plot}\PY{p}{(}\PY{n}{opt}\PY{p}{,} \PY{n}{options}\PY{p}{)}\PY{p}{:}
+            \PY{c+c1}{\PYZsh{}}
+            \PY{c+c1}{\PYZsh{} Calculating Model Prices}
+            \PY{c+c1}{\PYZsh{}}
+            \PY{n}{sigma} \PY{o}{=} \PY{n}{opt}
+            \PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Model}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{l+m+mf}{0.0}
+            \PY{k}{for} \PY{n}{row}\PY{p}{,} \PY{n}{option} \PY{o+ow}{in} \PY{n}{options}\PY{o}{.}\PY{n}{iterrows}\PY{p}{(}\PY{p}{)}\PY{p}{:}
+                \PY{n}{T} \PY{o}{=} \PY{p}{(}\PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZhy{}} \PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{o}{.}\PY{n}{days} \PY{o}{/} \PY{l+m+mf}{365.}
+                \PY{n}{options}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{row}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Model}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{BSM\PYZus{}call\PYZus{}value}\PY{p}{(}\PY{n}{S0}\PY{p}{,} \PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Strike}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+m+mi}{0}\PY{p}{,} \PY{n}{T}\PY{p}{,} \PY{n}{r}\PY{p}{,} \PY{n}{sigma}\PY{p}{)}
+        
+            \PY{c+c1}{\PYZsh{}}
+            \PY{c+c1}{\PYZsh{} Plotting}
+            \PY{c+c1}{\PYZsh{}}
+            \PY{n}{mats} \PY{o}{=} \PY{n+nb}{sorted}\PY{p}{(}\PY{n+nb}{set}\PY{p}{(}\PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{p}{)}
+            \PY{n}{options} \PY{o}{=} \PY{n}{options}\PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Strike}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+            \PY{k}{for} \PY{n}{i}\PY{p}{,} \PY{n}{mat} \PY{o+ow}{in} \PY{n+nb}{enumerate}\PY{p}{(}\PY{n}{mats}\PY{p}{)}\PY{p}{:}
+                \PY{n}{options}\PY{p}{[}\PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{n}{mat}\PY{p}{]}\PY{p}{[}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Call}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Model}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PYZbs{}
+                    \PY{n}{plot}\PY{p}{(}\PY{n}{style}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{b\PYZhy{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{ro}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{n}{title}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+si}{\PYZpc{}s}\PY{l+s+s1}{\PYZsq{}} \PY{o}{\PYZpc{}} \PY{n+nb}{str}\PY{p}{(}\PY{n}{mat}\PY{p}{)}\PY{p}{[}\PY{p}{:}\PY{l+m+mi}{10}\PY{p}{]}\PY{p}{,}
+                         \PY{n}{grid}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
+                \PY{n}{plt}\PY{o}{.}\PY{n}{ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{option value}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
+                \PY{n}{plt}\PY{o}{.}\PY{n}{savefig}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{BSM\PYZus{}calibration\PYZus{}3\PYZus{}}\PY{l+s+si}{\PYZpc{}s}\PY{l+s+s1}{.pdf}\PY{l+s+s1}{\PYZsq{}} \PY{o}{\PYZpc{}} \PY{n}{i}\PY{p}{)}
+\end{Verbatim}
+
+
+    The following graph shows that how the market data differs from the
+theoretical price by just making a guess of \(30\%\) volatility.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}5}]:} \PY{n}{generate\PYZus{}plot}\PY{p}{(}\PY{o}{.}\PY{l+m+mi}{3}\PY{p}{,} \PY{n}{options}\PY{p}{)}\PY{p}{;} \PY{c+c1}{\PYZsh{}Arbitrary input for the volatility}
+\end{Verbatim}
+
 
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_3_1.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_9_0.png}
     \end{center}
     { \hspace*{\fill} \\}
     
-    \textbf{General method of MC}
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_9_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_9_2.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \subsection{Calibration by minimizing
+RMSE}\label{calibration-by-minimizing-rmse}
 
-Let \(X\sim \phi\) and \(\mathbb E[X] = \mu\) and \(SD(X) = \sigma>0\),
-where \(\mu\) and \(\sigma\) are unknowns.
-
-Our goeal is to eistmiate \(\mu\).
-
-In crude MC, suppose computer can generate iid replicates
-\((X_i: i = 1, 2, ...)\), then we take the average of the first \(N\)
-replicates as its estimate:
-\[\mu_N  = \frac 1 N \sum_{i=1}^N X_i \to \mu, \hbox{ as } N\to \infty.\]
-The above convergence is guranteed by LLN. In other words, if we set the
-error as \[e_N = \mu_N - \mu,\] we have \(e_N \to 0\) as
-\(N\to \infty\), which is the most desired property of the estimator.
-
-Another desired property is \(L^2\) convergence, i.e.
-\[Var(e_N) = \mathbb E e_N^2 \to 0, \hbox{ as } N\to \infty.\] This
-property holds due to the following \(L^2\) error estimation
-\[\mathbb E e_N^2 =  \sigma^2/N.\] Indeed, by CLT, we also have
-\[e_N \Rightarrow \mathcal{N}(0, \sigma/\sqrt{N}).\]
-
-\textbf{Desired properties of the estimator \(\mu_N\)}
-
-\begin{itemize}
-\tightlist
-\item
-  (unbiasedness) \(\lim_N e_N = 0\)
-\item
-  (efficiency) \(Var(e_N)\) as small as possible.
-\end{itemize}
-
-    \textbf{Calculate the integral of general form}
-
-To calculate \(I = \int_D f(x) dx\) for \(D\subset \mathbb R^d\), we
-utilize the following identities:
-\[I = \frac{1}{|D|} \int_D f(x) \phi(x) dx =  \frac{1}{|D|} \mathbb E f(X),\]
-where \(|D|\) is the volume of \(D\), \(\phi (x) \equiv |D|^{-1}\), and
-\(X\sim U(D)\) is the uniform distribuiton on \(D\).
-
-\textbf{Ex.} Design a MC for the integral calculation, and prove its
-convergence.
-
-    \textbf{Ex} Calculate \$ I= \int\_\{2\}\^{}\{3\} {[}x\^{}2 + 4 , x
-,\sin(x){]} , dx. \$ by MC. For testing, we can use the anti-derivative
-\$ \frac{x^3}{3} + 4\sin(x) -4x\cos(x).\$
-
-To solve this using MC, we draw \(N\) random numbers from 2 to 3 and
-then take the average of all the values \(f(x)=x^2 + 4 \, x \,\sin(x)\)
-and normalized over the volume; in this case the volume is 1 (3-2=1).
+Suppose there are \(N\) options available in the market quote with
+various strike and maturities. We denote the market quotes of \(N\)
+options by \[\{C_n^*: \quad n = 1, 2, \ldots, N.\}.\] Correpondinly,
+there are \(N\) BSM theoretical prices available as a function of the
+volatility. We denote it by
+\[\{C_n(\sigma): \quad n = 1, 2, \ldots, N.\}\] The error function RMSE
+is defined by
+\[RMSE(\sigma) = \sqrt{\frac 1 N \sum_{n = 1}^N \Big| C_n^* - C_n(\sigma) \Big|^2}.\]
+Our goal is to find out the calibrated volatility \(\hat \sigma\), which
+is given by \[\hat \sigma = \arg \min_\sigma RMSE(\sigma).\]
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}3}]:} \PY{c+c1}{\PYZsh{} define f(x) for our integral}
-        \PY{k}{def} \PY{n+nf}{f}\PY{p}{(}\PY{n}{x}\PY{p}{)}\PY{p}{:}
-            \PY{k}{return} \PY{n}{x}\PY{o}{*}\PY{o}{*}\PY{l+m+mi}{2} \PY{o}{+} \PY{l+m+mi}{4}\PY{o}{*}\PY{n}{x}\PY{o}{*}\PY{n}{np}\PY{o}{.}\PY{n}{sin}\PY{p}{(}\PY{n}{x}\PY{p}{)} 
+{\color{incolor}In [{\color{incolor}6}]:} \PY{c+c1}{\PYZsh{} Error Function}
+        \PY{c+c1}{\PYZsh{}}
+        \PY{k}{def} \PY{n+nf}{BSM\PYZus{}error\PYZus{}function}\PY{p}{(}\PY{n}{p0}\PY{p}{)}\PY{p}{:}
+            \PY{l+s+sd}{\PYZsq{}\PYZsq{}\PYZsq{} Error Function for parameter calibration in BSM Model via}
+        \PY{l+s+sd}{    }
+        \PY{l+s+sd}{    Parameters}
+        \PY{l+s+sd}{    ==========}
+        \PY{l+s+sd}{    sigma: float}
+        \PY{l+s+sd}{        volatility factor in diffusion term}
         
-        \PY{c+c1}{\PYZsh{} and the anti\PYZhy{}derivative for testing}
-        \PY{k}{def} \PY{n+nf}{anti\PYZus{}derivative\PYZus{}f}\PY{p}{(}\PY{n}{x}\PY{p}{)}\PY{p}{:} 
-            \PY{k}{return} \PY{n}{x}\PY{o}{*}\PY{o}{*}\PY{l+m+mi}{3}\PY{o}{/}\PY{l+m+mf}{3.0}\PY{o}{+}\PY{l+m+mf}{4.0}\PY{o}{*}\PY{n}{np}\PY{o}{.}\PY{n}{sin}\PY{p}{(}\PY{n}{x}\PY{p}{)} \PY{o}{\PYZhy{}} \PY{l+m+mf}{4.0}\PY{o}{*}\PY{n}{x}\PY{o}{*}\PY{n}{np}\PY{o}{.}\PY{n}{cos}\PY{p}{(}\PY{n}{x}\PY{p}{)} 
+        \PY{l+s+sd}{    Returns}
+        \PY{l+s+sd}{    =======}
+        \PY{l+s+sd}{    RMSE: float}
+        \PY{l+s+sd}{        root mean squared error}
+        \PY{l+s+sd}{    \PYZsq{}\PYZsq{}\PYZsq{}}
+            \PY{k}{global} \PY{n}{i}\PY{p}{,} \PY{n}{min\PYZus{}RMSE}
+            \PY{n}{sigma} \PY{o}{=} \PY{n}{p0}
+            \PY{k}{if} \PY{n}{sigma} \PY{o}{\PYZlt{}} \PY{l+m+mf}{0.0}\PY{p}{:}
+                \PY{k}{return} \PY{l+m+mf}{500.0}
+            \PY{n}{se} \PY{o}{=} \PY{p}{[}\PY{p}{]}
+            \PY{k}{for} \PY{n}{row}\PY{p}{,} \PY{n}{option} \PY{o+ow}{in} \PY{n}{options}\PY{o}{.}\PY{n}{iterrows}\PY{p}{(}\PY{p}{)}\PY{p}{:}
+                \PY{n}{T} \PY{o}{=} \PY{p}{(}\PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZhy{}} \PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{o}{.}\PY{n}{days} \PY{o}{/} \PY{l+m+mf}{365.}
+                \PY{n}{model\PYZus{}value} \PY{o}{=} \PY{n}{BSM\PYZus{}call\PYZus{}value}\PY{p}{(}\PY{n}{S0}\PY{p}{,} \PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Strike}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+m+mi}{0}\PY{p}{,} \PY{n}{T}\PY{p}{,} \PY{n}{r}\PY{p}{,} \PY{n}{sigma}\PY{p}{)}
+                \PY{n}{se}\PY{o}{.}\PY{n}{append}\PY{p}{(}\PY{p}{(}\PY{n}{model\PYZus{}value} \PY{o}{\PYZhy{}} \PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Call}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)} \PY{o}{*}\PY{o}{*} \PY{l+m+mi}{2}\PY{p}{)}
+            \PY{n}{RMSE} \PY{o}{=} \PY{n}{math}\PY{o}{.}\PY{n}{sqrt}\PY{p}{(}\PY{n+nb}{sum}\PY{p}{(}\PY{n}{se}\PY{p}{)} \PY{o}{/} \PY{n+nb}{len}\PY{p}{(}\PY{n}{se}\PY{p}{)}\PY{p}{)}
+            \PY{n}{min\PYZus{}RMSE} \PY{o}{=} \PY{n+nb}{min}\PY{p}{(}\PY{n}{min\PYZus{}RMSE}\PY{p}{,} \PY{n}{RMSE}\PY{p}{)}
+            \PY{k}{if} \PY{n}{i} \PY{o}{\PYZpc{}} \PY{l+m+mi}{5} \PY{o}{==} \PY{l+m+mi}{0}\PY{p}{:}
+                \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+si}{\PYZpc{}4d}\PY{l+s+s1}{ |}\PY{l+s+s1}{\PYZsq{}} \PY{o}{\PYZpc{}} \PY{n}{i}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{array}\PY{p}{(}\PY{n}{p0}\PY{p}{)}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{| }\PY{l+s+si}{\PYZpc{}7.3f}\PY{l+s+s1}{ | }\PY{l+s+si}{\PYZpc{}7.3f}\PY{l+s+s1}{\PYZsq{}} \PY{o}{\PYZpc{}} \PY{p}{(}\PY{n}{RMSE}\PY{p}{,} \PY{n}{min\PYZus{}RMSE}\PY{p}{)}\PY{p}{)}
+            \PY{n}{i} \PY{o}{+}\PY{o}{=} \PY{l+m+mi}{1}
+            \PY{k}{return} \PY{n}{RMSE}
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}4}]:} \PY{c+c1}{\PYZsh{}sage}
-        \PY{c+c1}{\PYZsh{}plot(f, xmin = \PYZhy{}1., xmax = 4.)}
+{\color{incolor}In [{\color{incolor}7}]:} \PY{c+c1}{\PYZsh{} Calibration initialization}
+        \PY{c+c1}{\PYZsh{}}
+        \PY{n}{i} \PY{o}{=} \PY{l+m+mi}{0}  \PY{c+c1}{\PYZsh{} counter initialization}
+        \PY{n}{min\PYZus{}RMSE} \PY{o}{=} \PY{l+m+mi}{200}  \PY{c+c1}{\PYZsh{} minimal RMSE initialization}
+        \PY{n}{opt} \PY{o}{=} \PY{n}{sop}\PY{o}{.}\PY{n}{fmin}\PY{p}{(}\PY{n}{BSM\PYZus{}error\PYZus{}function}\PY{p}{,} \PY{l+m+mf}{0.5}\PY{p}{,}
+                       \PY{n}{maxiter}\PY{o}{=}\PY{l+m+mi}{500}\PY{p}{,} \PY{n}{maxfun}\PY{o}{=}\PY{l+m+mi}{750}\PY{p}{,}
+                       \PY{n}{xtol}\PY{o}{=}\PY{l+m+mf}{0.000001}\PY{p}{,} \PY{n}{ftol}\PY{o}{=}\PY{l+m+mf}{0.000001}\PY{p}{)}
 \end{Verbatim}
 
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}5}]:} \PY{c+c1}{\PYZsh{} upper and lower limits:}
-        \PY{n}{a} \PY{o}{=} \PY{l+m+mi}{2}\PY{p}{;}    
-        \PY{n}{b} \PY{o}{=} \PY{l+m+mi}{3}\PY{p}{;} 
-        
-        \PY{c+c1}{\PYZsh{} use N draws }
-        \PY{n}{N}\PY{o}{=} \PY{l+m+mi}{10000}
-        
-        \PY{c+c1}{\PYZsh{}1. N values uniformly drawn from a to b }
-        \PY{n}{X} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{random}\PY{o}{.}\PY{n}{uniform}\PY{p}{(}\PY{n}{low}\PY{o}{=}\PY{n}{a}\PY{p}{,} \PY{n}{high}\PY{o}{=}\PY{n}{b}\PY{p}{,} \PY{n}{size}\PY{o}{=}\PY{n}{N}\PY{p}{)} 
-        
-        \PY{c+c1}{\PYZsh{}2. Compute f(X)}
-        \PY{n}{Y} \PY{o}{=} \PY{n}{f}\PY{p}{(}\PY{n}{X}\PY{p}{)}   
-        \PY{c+c1}{\PYZsh{} and the average}
-        \PY{n}{f\PYZus{}average} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{Y}\PY{p}{)}\PY{o}{/} \PY{n}{N}
-        
-        \PY{c+c1}{\PYZsh{}3. estimate value of integral}
-        \PY{n}{estimate} \PY{o}{=} \PY{p}{(}\PY{n}{b}\PY{o}{\PYZhy{}}\PY{n}{a}\PY{p}{)} \PY{o}{*} \PY{n}{f\PYZus{}average}\PY{p}{;}
-        
-        \PY{c+c1}{\PYZsh{}we compute the exact value for testing}
-        \PY{n}{exact\PYZus{}val} \PY{o}{=} \PY{n}{anti\PYZus{}derivative\PYZus{}f}\PY{p}{(}\PY{n}{b}\PY{p}{)} \PY{o}{\PYZhy{}} \PY{n}{anti\PYZus{}derivative\PYZus{}f}\PY{p}{(}\PY{n}{a}\PY{p}{)}
-        
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Monte Carlo estimate = }\PY{l+s+s2}{\PYZdq{}}\PY{p}{,}\PY{n}{estimate}\PY{p}{)}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Exact value = }\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{exact\PYZus{}val}\PY{p}{)}
-\end{Verbatim}
-
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-Monte Carlo estimate =  11.80977006827323
-Exact value =  11.811358925098283
-
-    \end{Verbatim}
-
-    \subsubsection{Mutlidimensional
-example:}\label{mutlidimensional-example}
-
-\textbf{Calculate the integral \(I=\int \int f(x, y) dx dy\) }
-
-where \(f(x,y) = x^2 +y^2\)
-
-over the region deﬁned by the condition \(x^2 +y^2 ≤ 1\).
-
-The steps are the same as above, but we need an additional check that
-the region condition is fulfilled by our random samples. In particular,
-we transform the problem into \(I = \int_D f(x) dx\) with
-\[D = [-1, 1]^2, \quad f(x, y) = (x^2+y^2) \cdot I_{[0,1]} (x^2+ y^2).\]
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}6}]:} \PY{c+c1}{\PYZsh{}define our f(x,y)}
-        \PY{n}{f\PYZus{}circle} \PY{o}{=} \PY{k}{lambda} \PY{n}{x}\PY{p}{,}\PY{n}{y}\PY{p}{:} \PY{n}{x}\PY{o}{*}\PY{o}{*}\PY{l+m+mi}{2} \PY{o}{+} \PY{n}{y}\PY{o}{*}\PY{o}{*}\PY{l+m+mi}{2}
-        
-        \PY{c+c1}{\PYZsh{} use N draws }
-        \PY{n}{N}\PY{o}{=} \PY{l+m+mi}{10000}
-        
-        \PY{c+c1}{\PYZsh{}sample X and Y}
-        \PY{n}{X}\PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{random}\PY{o}{.}\PY{n}{uniform}\PY{p}{(}\PY{n}{low}\PY{o}{=}\PY{o}{\PYZhy{}}\PY{l+m+mi}{1}\PY{p}{,} \PY{n}{high}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{,} \PY{n}{size}\PY{o}{=}\PY{n}{N}\PY{p}{)} 
-        \PY{n}{Y}\PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{random}\PY{o}{.}\PY{n}{uniform}\PY{p}{(}\PY{n}{low}\PY{o}{=}\PY{o}{\PYZhy{}}\PY{l+m+mi}{1}\PY{p}{,} \PY{n}{high}\PY{o}{=}\PY{l+m+mi}{1}\PY{p}{,} \PY{n}{size}\PY{o}{=}\PY{n}{N}\PY{p}{)} 
-        
-        \PY{c+c1}{\PYZsh{} calculate f(x) }
-        \PY{n}{f\PYZus{}value} \PY{o}{=} \PY{n}{f\PYZus{}circle}\PY{p}{(}\PY{n}{X}\PY{p}{,} \PY{n}{Y}\PY{p}{)}  
-        
-        \PY{c+c1}{\PYZsh{} reject all samples that do not satisfy our region condition}
-        \PY{n}{N} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{f\PYZus{}value}\PY{o}{\PYZlt{}}\PY{l+m+mi}{1}\PY{p}{)} 
-        
-        \PY{n}{f\PYZus{}average} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{f\PYZus{}value}\PY{p}{[}\PY{n}{f\PYZus{}value}\PY{o}{\PYZlt{}}\PY{l+m+mi}{1}\PY{p}{]}\PY{p}{)} \PY{o}{/} \PY{n}{N}
-        
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Monte Carlo estimate = }\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{pi}\PY{o}{*}\PY{n}{f\PYZus{}average}\PY{p}{)}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Exact value}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{pi}\PY{o}{/}\PY{l+m+mf}{2.0}\PY{p}{)}
-\end{Verbatim}
-
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-Monte Carlo estimate =  1.585025597585936
-Exact value 1.5707963267948966
+   0 | [0.5] | 214.284 | 200.000
+   5 | [0.35] | 119.761 | 119.761
+  10 | [0.2] |  25.162 |   7.525
+  15 | [0.175] |   9.808 |   3.796
+  20 | [0.1609375] |   3.594 |   3.594
+  25 | [0.1609375] |   3.594 |   3.584
+  30 | [0.16049805] |   3.584 |   3.584
+  35 | [0.16049805] |   3.584 |   3.584
+  40 | [0.16051178] |   3.584 |   3.584
+Optimization terminated successfully.
+         Current function value: 3.584264
+         Iterations: 22
+         Function evaluations: 44
 
     \end{Verbatim}
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}7}]:} \PY{c+c1}{\PYZsh{}sage}
-        \PY{c+c1}{\PYZsh{}f\PYZus{}circle\PYZus{}sage (x, y) = x\PYZca{}2 + y\PYZca{}2}
-        \PY{c+c1}{\PYZsh{}plot3d(f\PYZus{}circle\PYZus{}sage, (x,\PYZhy{}2,2), (y,\PYZhy{}2,2))}
+{\color{incolor}In [{\color{incolor}8}]:} \PY{n+nb}{print}\PY{p}{(}\PY{n}{opt}\PY{p}{)}
 \end{Verbatim}
 
 
-    \subsubsection{Error estimate}\label{error-estimate}
+    \begin{Verbatim}[commandchars=\\\{\}]
+[0.16051331]
 
-How does the accuracy depend on the number of points(samples)? Let's try
-the same 1-D integral \$ I= \int\_\{2\}\^{}\{3\} {[}x\^{}2 + 4 , x
-,\sin(x){]} , dx \$ as a function of the number of points.
-
-\textbf{ex}
-
-Let \(X\sim U(2,3)\) and \(Y = X^2 + 4Xsin(X)\). Find the variance of
-\(Y\).
+    \end{Verbatim}
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}8}]:} \PY{n}{simN} \PY{o}{=} \PY{l+m+mi}{500} \PY{c+c1}{\PYZsh{}simulation number}
-        \PY{n}{estimates} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{zeros}\PY{p}{(}\PY{n}{simN}\PY{p}{)} 
-        
-        \PY{c+c1}{\PYZsh{} upper and lower limits:}
-        \PY{n}{a} \PY{o}{=} \PY{l+m+mi}{2}\PY{p}{;}    
-        \PY{n}{b} \PY{o}{=} \PY{l+m+mi}{3}\PY{p}{;} 
-        
-        \PY{n}{exactval}\PY{o}{=} \PY{n}{anti\PYZus{}derivative\PYZus{}f}\PY{p}{(}\PY{n}{b}\PY{p}{)}\PY{o}{\PYZhy{}}\PY{n}{anti\PYZus{}derivative\PYZus{}f}\PY{p}{(}\PY{n}{a}\PY{p}{)}
-        
-        
-        \PY{k}{for} \PY{n}{N} \PY{o+ow}{in} \PY{n}{np}\PY{o}{.}\PY{n}{arange}\PY{p}{(}\PY{n}{simN}\PY{p}{)}\PY{p}{:}
-            \PY{n}{sampleN} \PY{o}{=} \PY{l+m+mi}{10}\PY{o}{*}\PY{n}{N} \PY{o}{+} \PY{l+m+mi}{10} \PY{c+c1}{\PYZsh{}sample number}
-            \PY{n}{X} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{random}\PY{o}{.}\PY{n}{uniform}\PY{p}{(}\PY{n}{low} \PY{o}{=} \PY{n}{a}\PY{p}{,} \PY{n}{high} \PY{o}{=} \PY{n}{b}\PY{p}{,} \PY{n}{size} \PY{o}{=} \PY{n}{sampleN}\PY{p}{)}
-            \PY{n}{Y} \PY{o}{=} \PY{n}{f}\PY{p}{(}\PY{n}{X}\PY{p}{)}
-            \PY{n}{estimates}\PY{p}{[}\PY{n}{N}\PY{p}{]} \PY{o}{=} \PY{p}{(}\PY{n}{b}\PY{o}{\PYZhy{}}\PY{n}{a}\PY{p}{)}\PY{o}{*}\PY{n}{np}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{Y}\PY{p}{)}\PY{o}{/}\PY{n}{sampleN}\PY{p}{;}
-        \PY{n}{errors\PYZus{}sq} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{square}\PY{p}{(}\PY{n}{estimates} \PY{o}{\PYZhy{}} \PY{n}{exactval}\PY{p}{)}
-        \PY{n}{x\PYZus{}cd} \PY{o}{=} \PY{l+m+mi}{10}\PY{o}{*}\PY{n}{np}\PY{o}{.}\PY{n}{arange}\PY{p}{(}\PY{n}{simN}\PY{p}{)}\PY{o}{+}\PY{l+m+mi}{10} \PY{c+c1}{\PYZsh{}sample numbers}
-        
-        \PY{n}{plt}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{x\PYZus{}cd}\PY{p}{,} \PY{n}{errors\PYZus{}sq}\PY{p}{)}
-        \PY{n}{sigma\PYZus{}sq} \PY{o}{=} \PY{l+m+mf}{0.1702}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{plot}\PY{p}{(}\PY{n}{x\PYZus{}cd}\PY{p}{,} \PY{n}{sigma\PYZus{}sq}\PY{o}{/}\PY{n}{x\PYZus{}cd}\PY{p}{)}
-        
-        \PY{n}{plt}\PY{o}{.}\PY{n}{xlabel}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{sample size}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{ylabel}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Error squared}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{ylim}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,} \PY{l+m+mf}{0.005}\PY{p}{)}\PY{p}{;}
-            
+{\color{incolor}In [{\color{incolor}9}]:} \PY{n}{generate\PYZus{}plot}\PY{p}{(}\PY{n}{opt}\PY{p}{,} \PY{n}{options}\PY{p}{)}\PY{p}{;}
 \end{Verbatim}
 
 
@@ -540,42 +490,13 @@ Let \(X\sim U(2,3)\) and \(Y = X^2 + 4Xsin(X)\). Find the variance of
     \end{center}
     { \hspace*{\fill} \\}
     
-    Our errors follow a normal distribution, and the variance of this
-distribution can be seen by plotting the histogram:
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}9}]:} \PY{c+c1}{\PYZsh{} multiple MC estimations}
-        \PY{n}{m}\PY{o}{=}\PY{l+m+mi}{1000}
-        \PY{n}{N}\PY{o}{=}\PY{l+m+mi}{1000}
-        
-        \PY{n}{estimates} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{zeros}\PY{p}{(}\PY{n}{m}\PY{p}{)}
-        
-        
-        \PY{k}{for} \PY{n}{i} \PY{o+ow}{in} \PY{n}{np}\PY{o}{.}\PY{n}{arange}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,}\PY{n}{m}\PY{p}{)}\PY{p}{:}    
-            \PY{n}{X} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{random}\PY{o}{.}\PY{n}{uniform}\PY{p}{(}\PY{n}{low}\PY{o}{=}\PY{n}{a}\PY{p}{,} \PY{n}{high}\PY{o}{=}\PY{n}{b}\PY{p}{,} \PY{n}{size}\PY{o}{=}\PY{n}{N}\PY{p}{)} \PY{c+c1}{\PYZsh{} N values uniformly drawn from a to b }
-            \PY{n}{Y} \PY{o}{=}\PY{n}{f}\PY{p}{(}\PY{n}{X}\PY{p}{)}   \PY{c+c1}{\PYZsh{} calculate f(x)}
-        
-            \PY{n}{estimates}\PY{p}{[}\PY{n}{i}\PY{p}{]}\PY{o}{=} \PY{p}{(}\PY{n}{b}\PY{o}{\PYZhy{}}\PY{n}{a}\PY{p}{)} \PY{o}{*} \PY{n}{np}\PY{o}{.}\PY{n}{sum}\PY{p}{(}\PY{n}{Y}\PY{p}{)}\PY{o}{/} \PY{n}{N}\PY{p}{;}
-            
-            
-        \PY{n}{plt}\PY{o}{.}\PY{n}{hist}\PY{p}{(}\PY{n}{estimates}\PY{p}{)}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{xlabel}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Estimate}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
-        \PY{n}{plt}\PY{o}{.}\PY{n}{ylabel}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Counts}\PY{l+s+s2}{\PYZdq{}}\PY{p}{)}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Mean: }\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{mean}\PY{p}{(}\PY{n}{estimates}\PY{p}{)}\PY{p}{)}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Variance: }\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{var}\PY{p}{(}\PY{n}{estimates}\PY{p}{)}\PY{p}{)}
-        \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s2}{\PYZdq{}}\PY{l+s+s2}{Theoretical variance is:}\PY{l+s+s2}{\PYZdq{}}\PY{p}{,} \PY{n}{sigma\PYZus{}sq}\PY{o}{/}\PY{n}{N}\PY{p}{)}
-\end{Verbatim}
-
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-Mean:  11.811037937288562
-Variance:  0.00017002372428973325
-Theoretical variance is: 0.0001702
-
-    \end{Verbatim}
-
     \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_16_1.png}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_14_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_14_2.png}
     \end{center}
     { \hspace*{\fill} \\}
     
