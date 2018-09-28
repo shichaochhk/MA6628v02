@@ -13,3 +13,7 @@ Notes are given below:
 Assignments are given below:
 
 - [Assignments](Assignments.ipynb)
+
+Some handwritten notes are given this foler below:
+
+- [Handwritten notes](https://github.com/songqsh/MA6628v02/tree/master/pdf)
