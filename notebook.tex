@@ -141,7 +141,7 @@
     \def\gt{>}
     \def\lt{<}
     % Document parameters
-    \title{L04s02}
+    \title{Assignments}
     
     
     
@@ -280,226 +280,85 @@
     
 
     
-    \section{Calibration of BSM
-Volatility}\label{calibration-of-bsm-volatility}
+    \section{Assignments}\label{assignments}
 
-    {[}Ref{]} Chap 8 of {[}Hil15{]}
+    \textbf{Prj01} (L01)
 
-In simple terms, problem of calibration is to find parameters for the
-proposed model such that observed market quotes of liquidly traded plain
-vanilla options are replicated as closely as possible. The general
-approach is that, one defines an error function that is to be minimized.
+A twin prime is a prime number that is either 2 less or 2 more than
+another prime number, see for details here:
+https://en.wikipedia.org/wiki/Twin\_prime
 
-    In this below, we will use - Sep-30-2014 Market quote on call options
-underlying Euro Stoxx 50 - BSM model - RMSE as an error function
+\begin{itemize}
+\tightlist
+\item
+  How many twin primes are bigger than one thousand but smaller than one
+  million?
+\item
+  What is the biggest twin prime you could find?
+\end{itemize}
 
-to illustrate the calibration of volatility.
+    \textbf{Prj02.} (L04) This is an application of BSM evaluation to
+Geometric asian option price
+
+Geometric asian call option with maturity \(T\) and strike \(K\) has its
+pay off as \[C(T) = (A(T) - K)^+,\] where \(A(T)\) is geometric average
+of the stock price at times \(0 \le t_1 < t_2, \ldots, < t_n = T\), i.e.
+\[A(T) = (S(t_1)S(t_2) \ldots S(t_n))^{1/n}.\]
+
+The call price can be thus written by
+\[C_0 = \mathbb E [e^{-rT} (A(T) - K)^+].\]
+
+\textbf{To do} Use "BSM\_option\_valuation" module to find the BSM asian
+option value with the following parameters
 
     \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}1}]:} \PY{k+kn}{import} \PY{n+nn}{numpy} \PY{k}{as} \PY{n+nn}{np}
-        \PY{k+kn}{import} \PY{n+nn}{pandas} \PY{k}{as} \PY{n+nn}{pd}
-        \PY{k+kn}{import} \PY{n+nn}{scipy}\PY{n+nn}{.}\PY{n+nn}{optimize} \PY{k}{as} \PY{n+nn}{sop}
+{\color{incolor}In [{\color{incolor}2}]:} \PY{o}{\PYZpc{}}\PY{k}{reset} \PYZhy{}f
+        \PY{k+kn}{import} \PY{n+nn}{numpy} \PY{k}{as} \PY{n+nn}{np}
+        \PY{c+c1}{\PYZsh{}An example is given here}
+        \PY{n}{S0} \PY{o}{=} \PY{l+m+mf}{100.0} \PY{c+c1}{\PYZsh{}initial stock price}
+        \PY{n}{K} \PY{o}{=} \PY{l+m+mf}{110.0} \PY{c+c1}{\PYZsh{}strike}
+        \PY{n}{r}\PY{o}{=}\PY{l+m+mf}{0.0475} \PY{c+c1}{\PYZsh{}interest rate}
+        \PY{n}{sigma} \PY{o}{=} \PY{l+m+mf}{0.20} \PY{c+c1}{\PYZsh{}vol}
+        \PY{n}{T} \PY{o}{=} \PY{l+m+mf}{1.} \PY{c+c1}{\PYZsh{}maturity}
+        \PY{n}{Otype}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{C}\PY{l+s+s1}{\PYZsq{}} \PY{c+c1}{\PYZsh{}Call type}
+        \PY{n}{n} \PY{o}{=} \PY{l+m+mi}{4} \PY{c+c1}{\PYZsh{}number of periods}
+        \PY{n}{t} \PY{o}{=} \PY{n}{np}\PY{o}{.}\PY{n}{linspace}\PY{p}{(}\PY{l+m+mf}{0.}\PY{p}{,} \PY{n}{T}\PY{p}{,} \PY{n}{n}\PY{o}{+}\PY{l+m+mi}{1}\PY{p}{)}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{:}\PY{p}{]} \PY{c+c1}{\PYZsh{}times to be used for geometric averaging stock price}
 \end{Verbatim}
 
 
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}2}]:} \PY{c+c1}{\PYZsh{} Market Data from www.eurexchange.com}
-        \PY{c+c1}{\PYZsh{} as of 30. September 2014}
-        \PY{c+c1}{\PYZsh{} European call \PYZam{} put option data (3 maturities)}
-        
-        \PY{n}{options} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{read\PYZus{}csv}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{SX5E\PYZus{}Options\PYZus{}140930.csv}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-        \PY{n}{S0} \PY{o}{=} \PY{l+m+mf}{3225.93}  \PY{c+c1}{\PYZsh{} EURO STOXX 50 level}
-        \PY{n}{r} \PY{o}{=} \PY{l+m+mf}{0.0005}  \PY{c+c1}{\PYZsh{} ECB base rate}
-        \PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{to\PYZus{}datetime}\PY{p}{(}\PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
-        \PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{pd}\PY{o}{.}\PY{n}{to\PYZus{}datetime}\PY{p}{(}\PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}
-        
-        \PY{n}{options}
-\end{Verbatim}
+    \textbf{Hint}
 
+Under the above BS model, one can show that the distribution of \(A(T)\)
+is again a lognormal under EMM in the form of
+\[A_T = S_0 \exp \{ (\hat r - \frac 1 2 \hat \sigma^2)T + \hat \sigma \sqrt T \hat Z\}.\]
+In the above, \(\hat Z\) is a standard normal random variable,
+\(\hat \sigma\) is
+\[\hat \sigma = \frac{\sigma}{n} \sqrt{\frac{(n+1)(2n+1)}{6}}\] and
+\(\hat r\) is
+\[\hat r = \frac 1 2 \hat \sigma^2 + \frac{n+1}{2n}(r - \frac 1 2 \sigma^2).\]
+Then, by fundamental asset pricing theory, we have GAC price by
+\[\Pi_0^c = e^{(\hat r - r)T} \mathbb E [ e^{-\hat r T} (A_T - K)^+].\]
 
-\begin{Verbatim}[commandchars=\\\{\}]
-{\color{outcolor}Out[{\color{outcolor}2}]:}          Date  Strike   Call   Maturity    Put
-        0  2014-09-30  3175.0  126.8 2014-12-19   78.8
-        1  2014-09-30  3200.0  110.9 2014-12-19   87.9
-        2  2014-09-30  3225.0   96.1 2014-12-19   98.1
-        3  2014-09-30  3250.0   82.3 2014-12-19  109.3
-        4  2014-09-30  3275.0   69.6 2014-12-19  121.6
-        5  2014-09-30  3175.0  171.0 2015-03-20  129.2
-        6  2014-09-30  3200.0  156.1 2015-03-20  139.4
-        7  2014-09-30  3225.0  142.0 2015-03-20  150.3
-        8  2014-09-30  3250.0  128.5 2015-03-20  161.8
-        9  2014-09-30  3275.0  115.8 2015-03-20  174.0
-        10 2014-09-30  3175.0   82.3 2014-10-17   24.5
-        11 2014-09-30  3200.0   64.3 2014-10-17   31.5
-        12 2014-09-30  3225.0   48.3 2014-10-17   40.5
-        13 2014-09-30  3250.0   34.6 2014-10-17   51.8
-        14 2014-09-30  3275.0   23.5 2014-10-17   65.8
-\end{Verbatim}
-            
-    The above data is the market quote on Sep-30-2014 on call and put
-options underlying Euro Stoxx 50. The question of the calibration is,
-given that the market follows BSM, what is the volatility \(\sigma\)
-fitting to the above market quote?
+    \textbf{Prj03}
 
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}3}]:} \PY{k+kn}{from} \PY{n+nn}{BSM\PYZus{}option\PYZus{}valuation} \PY{k}{import} \PY{o}{*}
-\end{Verbatim}
+\begin{itemize}
+\tightlist
+\item
+  From Yahoo Finance, download option chain for SPY of the date for the
+  maturity of 1 month, 3 month, 12 month.
+\item
+  Sort the data for the strikes within \(2\%\) of difference from the
+  spot price.
+\item
+  Calibrate BSM vol for three sets of data independently for each
+  maturity.
+\item
+  Merge three sets of data into one, and calibrate BSM vol for entire
+  data sets.
+\item
+  Comment on what you oberved.
+\end{itemize}
 
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}4}]:} \PY{k}{def} \PY{n+nf}{generate\PYZus{}plot}\PY{p}{(}\PY{n}{opt}\PY{p}{,} \PY{n}{options}\PY{p}{)}\PY{p}{:}
-            \PY{c+c1}{\PYZsh{}}
-            \PY{c+c1}{\PYZsh{} Calculating Model Prices}
-            \PY{c+c1}{\PYZsh{}}
-            \PY{n}{sigma} \PY{o}{=} \PY{n}{opt}
-            \PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Model}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{l+m+mf}{0.0}
-            \PY{k}{for} \PY{n}{row}\PY{p}{,} \PY{n}{option} \PY{o+ow}{in} \PY{n}{options}\PY{o}{.}\PY{n}{iterrows}\PY{p}{(}\PY{p}{)}\PY{p}{:}
-                \PY{n}{T} \PY{o}{=} \PY{p}{(}\PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZhy{}} \PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{o}{.}\PY{n}{days} \PY{o}{/} \PY{l+m+mf}{365.}
-                \PY{n}{options}\PY{o}{.}\PY{n}{loc}\PY{p}{[}\PY{n}{row}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Model}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{=} \PY{n}{BSM\PYZus{}call\PYZus{}value}\PY{p}{(}\PY{n}{S0}\PY{p}{,} \PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Strike}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+m+mi}{0}\PY{p}{,} \PY{n}{T}\PY{p}{,} \PY{n}{r}\PY{p}{,} \PY{n}{sigma}\PY{p}{)}
-        
-            \PY{c+c1}{\PYZsh{}}
-            \PY{c+c1}{\PYZsh{} Plotting}
-            \PY{c+c1}{\PYZsh{}}
-            \PY{n}{mats} \PY{o}{=} \PY{n+nb}{sorted}\PY{p}{(}\PY{n+nb}{set}\PY{p}{(}\PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{p}{)}
-            \PY{n}{options} \PY{o}{=} \PY{n}{options}\PY{o}{.}\PY{n}{set\PYZus{}index}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Strike}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-            \PY{k}{for} \PY{n}{i}\PY{p}{,} \PY{n}{mat} \PY{o+ow}{in} \PY{n+nb}{enumerate}\PY{p}{(}\PY{n}{mats}\PY{p}{)}\PY{p}{:}
-                \PY{n}{options}\PY{p}{[}\PY{n}{options}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{==} \PY{n}{mat}\PY{p}{]}\PY{p}{[}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Call}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Model}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{]}\PY{o}{.}\PYZbs{}
-                    \PY{n}{plot}\PY{p}{(}\PY{n}{style}\PY{o}{=}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{b\PYZhy{}}\PY{l+s+s1}{\PYZsq{}}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{ro}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{n}{title}\PY{o}{=}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+si}{\PYZpc{}s}\PY{l+s+s1}{\PYZsq{}} \PY{o}{\PYZpc{}} \PY{n+nb}{str}\PY{p}{(}\PY{n}{mat}\PY{p}{)}\PY{p}{[}\PY{p}{:}\PY{l+m+mi}{10}\PY{p}{]}\PY{p}{,}
-                         \PY{n}{grid}\PY{o}{=}\PY{k+kc}{True}\PY{p}{)}
-                \PY{n}{plt}\PY{o}{.}\PY{n}{ylabel}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{option value}\PY{l+s+s1}{\PYZsq{}}\PY{p}{)}
-                \PY{n}{plt}\PY{o}{.}\PY{n}{savefig}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{BSM\PYZus{}calibration\PYZus{}3\PYZus{}}\PY{l+s+si}{\PYZpc{}s}\PY{l+s+s1}{.pdf}\PY{l+s+s1}{\PYZsq{}} \PY{o}{\PYZpc{}} \PY{n}{i}\PY{p}{)}
-\end{Verbatim}
-
-
-    The following graph shows that how the market data differs from the
-theoretical price by just making a guess of \(30\%\) volatility.
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}5}]:} \PY{n}{generate\PYZus{}plot}\PY{p}{(}\PY{o}{.}\PY{l+m+mi}{3}\PY{p}{,} \PY{n}{options}\PY{p}{)}\PY{p}{;} \PY{c+c1}{\PYZsh{}Arbitrary input for the volatility}
-\end{Verbatim}
-
-
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_9_0.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_9_1.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_9_2.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
-    \subsection{Calibration by minimizing
-RMSE}\label{calibration-by-minimizing-rmse}
-
-Suppose there are \(N\) options available in the market quote with
-various strike and maturities. We denote the market quotes of \(N\)
-options by \[\{C_n^*: \quad n = 1, 2, \ldots, N.\}.\] Correpondinly,
-there are \(N\) BSM theoretical prices available as a function of the
-volatility. We denote it by
-\[\{C_n(\sigma): \quad n = 1, 2, \ldots, N.\}\] The error function RMSE
-is defined by
-\[RMSE(\sigma) = \sqrt{\frac 1 N \sum_{n = 1}^N \Big| C_n^* - C_n(\sigma) \Big|^2}.\]
-Our goal is to find out the calibrated volatility \(\hat \sigma\), which
-is given by \[\hat \sigma = \arg \min_\sigma RMSE(\sigma).\]
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}6}]:} \PY{c+c1}{\PYZsh{} Error Function}
-        \PY{c+c1}{\PYZsh{}}
-        \PY{k}{def} \PY{n+nf}{BSM\PYZus{}error\PYZus{}function}\PY{p}{(}\PY{n}{p0}\PY{p}{)}\PY{p}{:}
-            \PY{l+s+sd}{\PYZsq{}\PYZsq{}\PYZsq{} Error Function for parameter calibration in BSM Model via}
-        \PY{l+s+sd}{    }
-        \PY{l+s+sd}{    Parameters}
-        \PY{l+s+sd}{    ==========}
-        \PY{l+s+sd}{    sigma: float}
-        \PY{l+s+sd}{        volatility factor in diffusion term}
-        
-        \PY{l+s+sd}{    Returns}
-        \PY{l+s+sd}{    =======}
-        \PY{l+s+sd}{    RMSE: float}
-        \PY{l+s+sd}{        root mean squared error}
-        \PY{l+s+sd}{    \PYZsq{}\PYZsq{}\PYZsq{}}
-            \PY{k}{global} \PY{n}{i}\PY{p}{,} \PY{n}{min\PYZus{}RMSE}
-            \PY{n}{sigma} \PY{o}{=} \PY{n}{p0}
-            \PY{k}{if} \PY{n}{sigma} \PY{o}{\PYZlt{}} \PY{l+m+mf}{0.0}\PY{p}{:}
-                \PY{k}{return} \PY{l+m+mf}{500.0}
-            \PY{n}{se} \PY{o}{=} \PY{p}{[}\PY{p}{]}
-            \PY{k}{for} \PY{n}{row}\PY{p}{,} \PY{n}{option} \PY{o+ow}{in} \PY{n}{options}\PY{o}{.}\PY{n}{iterrows}\PY{p}{(}\PY{p}{)}\PY{p}{:}
-                \PY{n}{T} \PY{o}{=} \PY{p}{(}\PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Maturity}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]} \PY{o}{\PYZhy{}} \PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Date}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)}\PY{o}{.}\PY{n}{days} \PY{o}{/} \PY{l+m+mf}{365.}
-                \PY{n}{model\PYZus{}value} \PY{o}{=} \PY{n}{BSM\PYZus{}call\PYZus{}value}\PY{p}{(}\PY{n}{S0}\PY{p}{,} \PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Strike}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{,} \PY{l+m+mi}{0}\PY{p}{,} \PY{n}{T}\PY{p}{,} \PY{n}{r}\PY{p}{,} \PY{n}{sigma}\PY{p}{)}
-                \PY{n}{se}\PY{o}{.}\PY{n}{append}\PY{p}{(}\PY{p}{(}\PY{n}{model\PYZus{}value} \PY{o}{\PYZhy{}} \PY{n}{option}\PY{p}{[}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{Call}\PY{l+s+s1}{\PYZsq{}}\PY{p}{]}\PY{p}{)} \PY{o}{*}\PY{o}{*} \PY{l+m+mi}{2}\PY{p}{)}
-            \PY{n}{RMSE} \PY{o}{=} \PY{n}{math}\PY{o}{.}\PY{n}{sqrt}\PY{p}{(}\PY{n+nb}{sum}\PY{p}{(}\PY{n}{se}\PY{p}{)} \PY{o}{/} \PY{n+nb}{len}\PY{p}{(}\PY{n}{se}\PY{p}{)}\PY{p}{)}
-            \PY{n}{min\PYZus{}RMSE} \PY{o}{=} \PY{n+nb}{min}\PY{p}{(}\PY{n}{min\PYZus{}RMSE}\PY{p}{,} \PY{n}{RMSE}\PY{p}{)}
-            \PY{k}{if} \PY{n}{i} \PY{o}{\PYZpc{}} \PY{l+m+mi}{5} \PY{o}{==} \PY{l+m+mi}{0}\PY{p}{:}
-                \PY{n+nb}{print}\PY{p}{(}\PY{l+s+s1}{\PYZsq{}}\PY{l+s+si}{\PYZpc{}4d}\PY{l+s+s1}{ |}\PY{l+s+s1}{\PYZsq{}} \PY{o}{\PYZpc{}} \PY{n}{i}\PY{p}{,} \PY{n}{np}\PY{o}{.}\PY{n}{array}\PY{p}{(}\PY{n}{p0}\PY{p}{)}\PY{p}{,} \PY{l+s+s1}{\PYZsq{}}\PY{l+s+s1}{| }\PY{l+s+si}{\PYZpc{}7.3f}\PY{l+s+s1}{ | }\PY{l+s+si}{\PYZpc{}7.3f}\PY{l+s+s1}{\PYZsq{}} \PY{o}{\PYZpc{}} \PY{p}{(}\PY{n}{RMSE}\PY{p}{,} \PY{n}{min\PYZus{}RMSE}\PY{p}{)}\PY{p}{)}
-            \PY{n}{i} \PY{o}{+}\PY{o}{=} \PY{l+m+mi}{1}
-            \PY{k}{return} \PY{n}{RMSE}
-\end{Verbatim}
-
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}7}]:} \PY{c+c1}{\PYZsh{} Calibration initialization}
-        \PY{c+c1}{\PYZsh{}}
-        \PY{n}{i} \PY{o}{=} \PY{l+m+mi}{0}  \PY{c+c1}{\PYZsh{} counter initialization}
-        \PY{n}{min\PYZus{}RMSE} \PY{o}{=} \PY{l+m+mi}{200}  \PY{c+c1}{\PYZsh{} minimal RMSE initialization}
-        \PY{n}{opt} \PY{o}{=} \PY{n}{sop}\PY{o}{.}\PY{n}{fmin}\PY{p}{(}\PY{n}{BSM\PYZus{}error\PYZus{}function}\PY{p}{,} \PY{l+m+mf}{0.5}\PY{p}{,}
-                       \PY{n}{maxiter}\PY{o}{=}\PY{l+m+mi}{500}\PY{p}{,} \PY{n}{maxfun}\PY{o}{=}\PY{l+m+mi}{750}\PY{p}{,}
-                       \PY{n}{xtol}\PY{o}{=}\PY{l+m+mf}{0.000001}\PY{p}{,} \PY{n}{ftol}\PY{o}{=}\PY{l+m+mf}{0.000001}\PY{p}{)}
-\end{Verbatim}
-
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-   0 | [0.5] | 214.284 | 200.000
-   5 | [0.35] | 119.761 | 119.761
-  10 | [0.2] |  25.162 |   7.525
-  15 | [0.175] |   9.808 |   3.796
-  20 | [0.1609375] |   3.594 |   3.594
-  25 | [0.1609375] |   3.594 |   3.584
-  30 | [0.16049805] |   3.584 |   3.584
-  35 | [0.16049805] |   3.584 |   3.584
-  40 | [0.16051178] |   3.584 |   3.584
-Optimization terminated successfully.
-         Current function value: 3.584264
-         Iterations: 22
-         Function evaluations: 44
-
-    \end{Verbatim}
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}8}]:} \PY{n+nb}{print}\PY{p}{(}\PY{n}{opt}\PY{p}{)}
-\end{Verbatim}
-
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-[0.16051331]
-
-    \end{Verbatim}
-
-    \begin{Verbatim}[commandchars=\\\{\}]
-{\color{incolor}In [{\color{incolor}9}]:} \PY{n}{generate\PYZus{}plot}\PY{p}{(}\PY{n}{opt}\PY{p}{,} \PY{n}{options}\PY{p}{)}\PY{p}{;}
-\end{Verbatim}
-
-
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_14_0.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_14_1.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
-    \begin{center}
-    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{output_14_2.png}
-    \end{center}
-    { \hspace*{\fill} \\}
-    
 
     % Add a bibliography block to the postdoc
     
