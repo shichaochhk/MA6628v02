@@ -8,7 +8,8 @@ Notes are given below:
 - [Note 03-02](L03s02.ipynb) Sampling - Inverse transform method
 - [Note 04-01](L04s01.ipynb) BSM option valuation
 - [Note 04-02](L04s02.ipynb) Calibration
-- [Note 05](L05s01.ipynb) CRR option valuation
+- [Note 05](L05s01.ipynb) CRR option valuation (optional)
+- [Note 06](B03898_04_codes/Note01.ipynb) Binomial options
 
 Assignments are given below:
 
