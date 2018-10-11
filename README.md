@@ -10,6 +10,8 @@ Notes are given below:
 - [Note 04-02](L04s02.ipynb) Calibration
 - [Note 05](L05s01.ipynb) CRR option valuation (optional)
 - [Note 06](B03898_04_codes/Note01.ipynb) Binomial options
+- [Note 07](RandomWalk01.ipynb) Random walk construction for the sample path
+
 
 Assignments are given below:
 
