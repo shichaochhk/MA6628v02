@@ -7,6 +7,7 @@ Created on Wed Oct 24 19:41:01 2018
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 class SDE:
     def __init__(self, Drift, Vol, InitState):
@@ -37,11 +38,17 @@ class SDE:
         return t, Xh
         
 if __name__ == '__main__':
+    
+    #std BM
     b = lambda x, t: 0.
     sigma = lambda x, t: 1.
     x0 = 0.
     iSDE = SDE(b, sigma, x0)
     iSDE.PrtInitState()
     iSDE.PrtCoef(1., 5.)
+    
+    for i in range(10): 
+        [t, Y] = iSDE.Euler(2., 4000); 
+        plt.plot(t,Y);
     
     
