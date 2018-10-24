@@ -10,32 +10,36 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class SDE:
-    def __init__(self, Drift, Vol, InitState):
-        self.Drift = Drift
-        self.Vol = Vol
+    def __init__(self, Mu, Sigma, InitState):
+        self.Mu = Mu
+        self.Sigma = Sigma
         self.InitState = InitState
         
     def PrtCoef(self, x, t):
         print('At state x = ' + str(x) + ' time t = ' + str(t) + '\n')
-        print('Drift is b = ' + str(self.Drift(x, t)) + '\n')
-        print('Volatility is Sigma = ' + str(self.Vol(x, t)) + '\n')
+        print('Mu ' + str(self.Mu(x, t)) + '\n')
+        print('Sigma = ' + str(self.Sigma(x, t)) + '\n')
         
     def PrtInitState(self):
         print('Initial state is ' + str(self.InitState) + '\n')
         
     def Euler(self, T, N):
         x0 = self.InitState
-        Mu = self.Drift
-        Sigma = self.Vol       
+        Mu = self.Mu
+        Sigma = self.Sigma       
         t = np.linspace(0, T, N+1)
         
+        Wh = np.zeros(N+1) #init BM
         Xh = x0 + np.zeros(N+1) #init Xh
         
         for i in range(N): #run EM
-            Xh[i+1] = Xh[i] + Mu(Xh[i], t[i]) * (t[i+1] - t[i]) + \
-            Sigma(Xh[i], t[i])* np.sqrt(t[i+1] - t[i])*np.random.normal()
+            DeltaT = t[i+1] - t[i]
+            DeltaW = np.sqrt(t[i+1] - t[i]) * np.random.normal()
+            Wh[i+1] = Wh[i] + DeltaW
+            Xh[i+1] = Xh[i] + Mu(Xh[i], t[i]) * DeltaT + \
+            Sigma(Xh[i], t[i])* DeltaW
             
-        return t, Xh
+        return t, Xh, Wh
         
 if __name__ == '__main__':
     
@@ -48,7 +52,7 @@ if __name__ == '__main__':
     iSDE.PrtCoef(1., 5.)
     
     for i in range(10): 
-        [t, Y] = iSDE.Euler(2., 4000); 
+        [t, Y, W] = iSDE.Euler(2., 4000); 
         plt.plot(t,Y);
     
     
