@@ -37,9 +37,11 @@ class GBM(SDE):
         x0 = self.InitState
         b = self.Drift
         sigma = self.Vol
-        d1 = (np.log(x0 / K) + (b + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+        d1 = (np.log(x0 / K) + \
+              (b + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
         d2 = d1 - sigma * np.sqrt(T)
-        call_value = x0 * ss.norm.cdf(d1) - np.exp(-b * T) * K * ss.norm.cdf(d2)
+        call_value = x0 * ss.norm.cdf(d1) - \
+            np.exp(-b * T) * K * ss.norm.cdf(d2)
         return call_value
     
     def _Put_(self, K, T):
@@ -58,8 +60,6 @@ if __name__ == "__main__":
     T = 1.
     
     iGBM = GBM(r, sigma, S0)
-    iGBM.PrtInitState()
-    iGBM.PrtCoef(S0, T)
     
     #plot a figure of ten paths
     for i in range(10): 
