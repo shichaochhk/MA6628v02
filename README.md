@@ -13,6 +13,7 @@ Notes are given below:
 - [Note 07](RandomWalk01.ipynb) Random walk construction for the sample path
 - [Note 08](EM03.ipynb) Euler method
 - [Note 09](L_M76V01.ipynb) Euler method for jump process - Merton 76 model
+- [Note 10](ControlVariates.ipynb) Variance reduction
 
 Assignments are given below:
 
